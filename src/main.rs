@@ -12,7 +12,6 @@ async fn main() -> anyhow::Result<()> {
     let pool = PgPool::connect(&database_url).await?;
     let row: (i32,) = sqlx::query_as("SELECT 1").fetch_one(&pool).await?;
     println!("db says {}", row.0);
-    
 
     Ok(())
 }
