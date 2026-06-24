@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use uuid::Uuid;
 
-
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Bookmark {
     pub id: Uuid,
@@ -35,4 +34,3 @@ pub struct UpdateBookmark {
     pub url: Option<String>,
     pub description: Option<String>,
 }
-
