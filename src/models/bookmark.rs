@@ -6,7 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Bookmark {
     pub id: Uuid,
-    pub owner_id: Uuid,
+    // pub owner_id: Uuid,
     pub title: String,
     pub url: String,
     pub description: Option<String>,
