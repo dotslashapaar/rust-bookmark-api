@@ -6,14 +6,13 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    db::bookmark::BookmarkRepo,
-    error::{AppError, AppResult},
-    models::bookmark::{Bookmark, CreateBookmark, UpdateBookmark},
+    db::{bookmark::BookmarkRepo, user::UserRepo}, error::{AppError, AppResult}, models::bookmark::{Bookmark, CreateBookmark, UpdateBookmark},
 };
 
 #[derive(Clone)]
 pub struct AppState {
     pub bookmark_repo: BookmarkRepo,
+    pub user_repo: UserRepo
 }
 
 pub async fn list_all_bookmarks(State(state): State<AppState>) -> AppResult<Json<Vec<Bookmark>>> {

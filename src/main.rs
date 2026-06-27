@@ -1,7 +1,8 @@
 use std::env;
 
 use bookmarks_api::{
-    db::bookmark::BookmarkRepo, handlers::bookmark::AppState, routes::bookmark::bookmark_routes,
+    db::{bookmark::BookmarkRepo, user::UserRepo}, handlers::bookmark::AppState,
+    routes::bookmark::bookmark_routes,
 };
 use dotenvy::dotenv;
 use sqlx::PgPool;
@@ -14,9 +15,11 @@ async fn main() -> anyhow::Result<()> {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = PgPool::connect(&database_url).await?;
 
-    let repo = BookmarkRepo::new(pool);
+    let bookmark_repo = BookmarkRepo::new(pool.clone());
+    let user_repo = UserRepo::new(pool);
     let state = AppState {
-        bookmark_repo: repo,
+        bookmark_repo,
+        user_repo,
     };
 
     let app = bookmark_routes().with_state(state);

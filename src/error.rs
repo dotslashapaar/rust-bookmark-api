@@ -12,6 +12,8 @@ pub enum AppError {
     NotFound(String),
     #[error("Bad request: {0}")]
     BadRequest(String),
+    #[error("Conflict: {0}")]
+    Conflict(String),
     #[error("Database error: {0}")]
     DbError(#[from] sqlx::Error),
     #[error("Internal server error")]
@@ -25,6 +27,7 @@ impl IntoResponse for AppError {
         let (status, message) = match &self {
             AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg.clone()),
             AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
+            AppError::Conflict(msg) => (StatusCode::CONFLICT, msg.clone()),
             AppError::DbError(e) => {
                 tracing::error!("Database error: {:?}", e);
                 (
