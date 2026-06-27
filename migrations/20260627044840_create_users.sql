@@ -1,8 +1,9 @@
 -- Add migration script here
-CREATE TABLE bookmarks (
+
+CREATE TABLE users (
     id UUID PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    url TEXT NOT NULL,
-    description TEXT,
+    password_hash TEXT NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+

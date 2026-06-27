@@ -1,6 +1,14 @@
-use axum::{Router, body::Body, http::{Request, StatusCode}};
+use axum::{
+    Router,
+    body::Body,
+    http::{Request, StatusCode},
+};
 use bookmarks_api::{
-    db::bookmark::BookmarkRepo, error::AppError, handlers::bookmark::AppState, models::bookmark::{Bookmark, CreateBookmark, UpdateBookmark}, routes::bookmark::bookmark_routes,
+    db::bookmark::BookmarkRepo,
+    error::AppError,
+    handlers::bookmark::AppState,
+    models::bookmark::{Bookmark, CreateBookmark, UpdateBookmark},
+    routes::bookmark::bookmark_routes,
 };
 use http_body_util::BodyExt;
 use sqlx::PgPool;
@@ -90,7 +98,7 @@ async fn list_returns_all_bookmarks(pool: PgPool) {
 
     assert_eq!(all.len(), 3);
     let titles: Vec<&str> = all.iter().map(|b| b.title.as_str()).collect();
-    
+
     assert!(titles.contains(&"One"));
     assert!(titles.contains(&"Two"));
     assert!(titles.contains(&"Three"));
@@ -109,7 +117,6 @@ async fn update_changes_fields(pool: PgPool) {
         .await
         .unwrap();
 
-
     let updated = repo
         .update(
             created.id,
@@ -127,7 +134,6 @@ async fn update_changes_fields(pool: PgPool) {
     assert_eq!(updated.url, "https://old.example.com");
 }
 
-
 #[sqlx::test]
 async fn http_create_returns_ok(pool: PgPool) {
     let app = test_app_setup(pool);
@@ -144,7 +150,6 @@ async fn http_create_returns_ok(pool: PgPool) {
 
     let res = app.oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
-
 }
 
 #[sqlx::test]
@@ -211,9 +216,7 @@ async fn http_list_returns_all(pool: PgPool) {
     let res = app.oneshot(req).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
 
-
     let body = res.into_body().collect().await.unwrap().to_bytes();
     let bookmarks: Vec<Bookmark> = serde_json::from_slice(&body).unwrap();
     assert_eq!(bookmarks.len(), 2);
-
 }
