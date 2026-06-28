@@ -18,8 +18,8 @@ pub enum AppError {
     DbError(#[from] sqlx::Error),
     #[error("Internal server error")]
     InternalError(#[from] anyhow::Error),
-    // #[error("Unauthorized access")]
-    // Unauthorized,
+    #[error("Unauthorized")]
+    Unauthorized,
 }
 
 impl IntoResponse for AppError {
@@ -42,6 +42,7 @@ impl IntoResponse for AppError {
                     "An internal server error occured".to_string(),
                 )
             }
+            AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "Invalid credentials".to_string()),
         };
 
         let body = Json(json!({

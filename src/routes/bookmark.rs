@@ -3,7 +3,7 @@ use axum::{
     routing::{delete, get, patch, post},
 };
 
-use crate::handlers::{auth::register_user, bookmark::{
+use crate::handlers::{auth::{login_user, register_user}, bookmark::{
     AppState, create_bookmark, delete_bookmark, get_bookmark, list_all_bookmarks, update_bookmark,
 }};
 
@@ -15,6 +15,7 @@ pub fn bookmark_routes() -> Router<AppState> {
         .route("/bookmarks/{id}", patch(update_bookmark))
         .route("/bookmarks/{id}", delete(delete_bookmark))
         .route("/register", post(register_user))
+        .route("/login", post(login_user))
 }
 
 // pub fn bookmark_routes() -> Router<AppState> {

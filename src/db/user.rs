@@ -31,4 +31,11 @@ impl UserRepo {
 
         Ok(user)
     }
+
+    pub async fn find_by_email(&self, email: &str)-> AppResult<User> {
+        let user = sqlx::query_as!(User, 
+            "SELECT * FROM users WHERE email = $1", 
+            email).fetch_optional(&self.pool).await?.ok_or_else(|| AppError::NotFound(format!("User {email} not found")))?;
+        Ok(user)
+    }
 }

@@ -13,6 +13,7 @@ async fn main() -> anyhow::Result<()> {
     dotenv().ok();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let pool = PgPool::connect(&database_url).await?;
 
     let bookmark_repo = BookmarkRepo::new(pool.clone());
@@ -20,6 +21,7 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState {
         bookmark_repo,
         user_repo,
+        jwt_secret,
     };
 
     let app = bookmark_routes().with_state(state);

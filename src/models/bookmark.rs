@@ -47,3 +47,8 @@ pub struct LoginRequest {
     pub password: String,
     pub email: String,
 }
+
+#[derive(Serialize)]
+pub struct LoginResponse {
+    pub token: String,
+}

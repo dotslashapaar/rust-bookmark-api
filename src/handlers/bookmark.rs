@@ -12,7 +12,8 @@ use crate::{
 #[derive(Clone)]
 pub struct AppState {
     pub bookmark_repo: BookmarkRepo,
-    pub user_repo: UserRepo
+    pub user_repo: UserRepo,
+    pub jwt_secret: String,
 }
 
 pub async fn list_all_bookmarks(State(state): State<AppState>) -> AppResult<Json<Vec<Bookmark>>> {

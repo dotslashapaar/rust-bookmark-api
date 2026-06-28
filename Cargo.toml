@@ -9,7 +9,7 @@ argon2 = "0.5.3"
 axum = "0.8.9"
 chrono = { version = "0.4.45", features = ["serde"] }
 dotenvy = "0.15.7"
-jsonwebtoken = "10.4.0"
+jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
 password-hash = { version = "0.5", features = ["getrandom"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
