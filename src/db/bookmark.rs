@@ -17,63 +17,24 @@ impl BookmarkRepo {
         Self { pool }
     }
 
-    pub async fn get_all(&self) -> AppResult<Vec<Bookmark>> {
-        let bookmarks =
-            sqlx::query_as!(Bookmark, "SELECT * FROM bookmarks ORDER BY created_at DESC",)
-                .fetch_all(&self.pool)
-                .await?;
+    pub async fn get_all(&self, user_id: Uuid) -> AppResult<Vec<Bookmark>> {
+        let bookmarks = sqlx::query_as!(
+            Bookmark,
+            "SELECT * FROM bookmarks WHERE owner_id = $1 ORDER BY created_at DESC",
+            user_id
+        )
+        .fetch_all(&self.pool)
+        .await?;
 
         Ok(bookmarks)
     }
 
-    pub async fn get_by_id(&self, id: Uuid) -> AppResult<Bookmark> {
-        let bookmark = sqlx::query_as!(Bookmark, "SELECT * FROM bookmarks WHERE id = $1", id)
-            .fetch_optional(&self.pool)
-            .await?
-            .ok_or_else(|| AppError::NotFound(format!("Bookmark {id} not found")))?;
-
-        Ok(bookmark)
-    }
-
-    pub async fn create(&self, input: CreateBookmark) -> AppResult<Bookmark> {
-        let now = Utc::now();
-        let id = Uuid::new_v4();
-
+    pub async fn get_by_id(&self, id: Uuid, user_id: Uuid) -> AppResult<Bookmark> {
         let bookmark = sqlx::query_as!(
             Bookmark,
-            "
-            INSERT INTO bookmarks (id, title, url, description, created_at)
-            VALUES($1, $2, $3, $4, $5)
-            RETURNING *
-            ",
+            "SELECT * FROM bookmarks WHERE id = $1 AND owner_id = $2",
             id,
-            input.title,
-            input.url,
-            input.description,
-            now
-        )
-        .fetch_one(&self.pool)
-        .await?;
-
-        Ok(bookmark)
-    }
-
-    pub async fn update(&self, id: Uuid, input: UpdateBookmark) -> AppResult<Bookmark> {
-        let bookmark = sqlx::query_as!(
-            Bookmark,
-            "
-            UPDATE bookmarks
-            SET
-                title = COALESCE($2, title),
-                url = COALESCE($3, url),
-                description = COALESCE($4, description)
-            WHERE id = $1
-            RETURNING *
-            ",
-            id,
-            input.title,
-            input.url,
-            input.description
+            user_id
         )
         .fetch_optional(&self.pool)
         .await?
@@ -82,10 +43,68 @@ impl BookmarkRepo {
         Ok(bookmark)
     }
 
-    pub async fn delete(&self, id: Uuid) -> AppResult<bool> {
-        let result = sqlx::query!("DELETE FROM bookmarks WHERE id = $1", id)
-            .execute(&self.pool)
-            .await?;
+    pub async fn create(&self, input: CreateBookmark, user_id: Uuid) -> AppResult<Bookmark> {
+        let now = Utc::now();
+        let id = Uuid::new_v4();
+
+        let bookmark = sqlx::query_as!(
+            Bookmark,
+            "
+            INSERT INTO bookmarks (id, title, url, description, created_at, owner_id)
+            VALUES($1, $2, $3, $4, $5, $6)
+            RETURNING *
+            ",
+            id,
+            input.title,
+            input.url,
+            input.description,
+            now,
+            user_id
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(bookmark)
+    }
+
+    pub async fn update(
+        &self,
+        id: Uuid,
+        input: UpdateBookmark,
+        user_id: Uuid,
+    ) -> AppResult<Bookmark> {
+        let bookmark = sqlx::query_as!(
+            Bookmark,
+            "
+            UPDATE bookmarks
+            SET
+                title = COALESCE($2, title),
+                url = COALESCE($3, url),
+                description = COALESCE($4, description)
+            WHERE id = $1 AND owner_id = $5
+            RETURNING *
+            ",
+            id,
+            input.title,
+            input.url,
+            input.description,
+            user_id
+        )
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Bookmark {id} not found")))?;
+
+        Ok(bookmark)
+    }
+
+    pub async fn delete(&self, id: Uuid, user_id: Uuid) -> AppResult<bool> {
+        let result = sqlx::query!(
+            "DELETE FROM bookmarks WHERE id = $1 AND owner_id = $2",
+            id,
+            user_id
+        )
+        .execute(&self.pool)
+        .await?;
 
         Ok(result.rows_affected() > 0)
     }

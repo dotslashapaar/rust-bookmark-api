@@ -8,6 +8,7 @@ use uuid::Uuid;
 use crate::{
     db::{bookmark::BookmarkRepo, user::UserRepo},
     error::{AppError, AppResult},
+    handlers::auth::AuthUser,
     models::bookmark::{Bookmark, CreateBookmark, UpdateBookmark},
 };
 
@@ -18,20 +19,25 @@ pub struct AppState {
     pub jwt_secret: String,
 }
 
-pub async fn list_all_bookmarks(State(state): State<AppState>) -> AppResult<Json<Vec<Bookmark>>> {
-    let bookmarks = state.bookmark_repo.get_all().await?;
+pub async fn list_all_bookmarks(
+    user: AuthUser,
+    State(state): State<AppState>,
+) -> AppResult<Json<Vec<Bookmark>>> {
+    let bookmarks = state.bookmark_repo.get_all(user.id).await?;
     Ok(Json(bookmarks))
 }
 
 pub async fn get_bookmark(
+    user: AuthUser,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<Bookmark>> {
-    let bookmarks = state.bookmark_repo.get_by_id(id).await?;
+    let bookmarks = state.bookmark_repo.get_by_id(id, user.id).await?;
     Ok(Json(bookmarks))
 }
 
 pub async fn create_bookmark(
+    user: AuthUser,
     State(state): State<AppState>,
     Json(input): Json<CreateBookmark>,
 ) -> AppResult<Json<Bookmark>> {
@@ -39,26 +45,28 @@ pub async fn create_bookmark(
         return Err(AppError::BadRequest("Title cannot be empty".to_string()));
     }
 
-    let bookmark = state.bookmark_repo.create(input).await?;
+    let bookmark = state.bookmark_repo.create(input, user.id).await?;
 
     Ok(Json(bookmark))
 }
 
 pub async fn update_bookmark(
+    user: AuthUser,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateBookmark>,
 ) -> AppResult<Json<Bookmark>> {
-    let bookmark = state.bookmark_repo.update(id, input).await?;
+    let bookmark = state.bookmark_repo.update(id, input, user.id).await?;
 
     Ok(Json(bookmark))
 }
 
 pub async fn delete_bookmark(
+    user: AuthUser,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
-    let deleted = state.bookmark_repo.delete(id).await?;
+    let deleted = state.bookmark_repo.delete(id, user.id).await?;
     if deleted {
         Ok(StatusCode::NO_CONTENT)
     } else {
