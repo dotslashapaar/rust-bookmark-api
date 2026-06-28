@@ -1,11 +1,61 @@
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, password_hash::{SaltString, rand_core::OsRng}};
-use axum::{Json, extract::State};
+use argon2::{
+    Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
+    password_hash::{SaltString, rand_core::OsRng},
+};
+use axum::{
+    Json,
+    extract::{FromRequestParts, State},
+};
 use chrono::{Duration, Utc};
-use jsonwebtoken::{EncodingKey, Header, encode};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{error::{AppError, AppResult}, handlers::bookmark::AppState, models::bookmark::{LoginRequest, LoginResponse, RegisterRequest, User}};
+use crate::{
+    error::{AppError, AppResult},
+    handlers::bookmark::AppState,
+    models::bookmark::{LoginRequest, LoginResponse, RegisterRequest, User},
+};
+
+pub struct AuthUser {
+    pub id: Uuid,
+}
+
+impl FromRequestParts<AppState> for AuthUser {
+    type Rejection = AppError;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let header = parts
+            .headers
+            .get("Authorization")
+            .ok_or(AppError::Unauthorized)?;
+
+        let token = header
+            .to_str()
+            .map_err(|_| AppError::Unauthorized)?
+            .strip_prefix("Bearer ")
+            .ok_or(AppError::Unauthorized)?;
+
+        let data = decode::<Claims>(
+            token,
+            &DecodingKey::from_secret(state.jwt_secret.as_bytes()),
+            &Validation::default(),
+        )
+        .map_err(|_| AppError::Unauthorized)?;
+
+        let id = Uuid::parse_str(&data.claims.sub)
+            .map_err(|e| AppError::InternalError(anyhow::anyhow!(e.to_string())))?;
+
+        Ok(AuthUser { id })
+    }
+}
+
+pub async fn whoami(user: AuthUser) -> String {
+    format!("you are {}", user.id)
+}
 
 fn hash_secret(plain: &str) -> AppResult<String> {
     let salt = SaltString::generate(&mut OsRng);
@@ -16,7 +66,7 @@ fn hash_secret(plain: &str) -> AppResult<String> {
     Ok(hash)
 }
 
-fn verify_secret(plain: &str, stored_hash: &str) -> AppResult<bool>{
+fn verify_secret(plain: &str, stored_hash: &str) -> AppResult<bool> {
     let parsed = PasswordHash::new(stored_hash)
         .map_err(|e| AppError::InternalError(anyhow::anyhow!(e.to_string())))?;
     Ok(Argon2::default()
@@ -51,7 +101,10 @@ pub async fn register_user(
     Json(input): Json<RegisterRequest>,
 ) -> AppResult<Json<User>> {
     let password_hash = hash_secret(&input.password)?;
-    let user = state.user_repo.create_user(&input.email, &password_hash).await?;
+    let user = state
+        .user_repo
+        .create_user(&input.email, &password_hash)
+        .await?;
     Ok(Json(user))
 }
 
