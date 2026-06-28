@@ -1,7 +1,8 @@
 use std::env;
 
 use bookmarks_api::{
-    db::{bookmark::BookmarkRepo, user::UserRepo}, handlers::bookmark::AppState,
+    db::{bookmark::BookmarkRepo, user::UserRepo},
+    handlers::bookmark::AppState,
     routes::bookmark::bookmark_routes,
 };
 use dotenvy::dotenv;

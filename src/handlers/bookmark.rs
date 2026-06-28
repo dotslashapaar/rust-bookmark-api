@@ -6,7 +6,9 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    db::{bookmark::BookmarkRepo, user::UserRepo}, error::{AppError, AppResult}, models::bookmark::{Bookmark, CreateBookmark, UpdateBookmark},
+    db::{bookmark::BookmarkRepo, user::UserRepo},
+    error::{AppError, AppResult},
+    models::bookmark::{Bookmark, CreateBookmark, UpdateBookmark},
 };
 
 #[derive(Clone)]
